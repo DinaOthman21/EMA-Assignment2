@@ -1,10 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:assignment2/JSON/user.dart';
 import 'package:assignment2/SQLite/database_helper.dart';
 import 'package:assignment2/provider/store_provider.dart';
 import 'package:assignment2/signin.dart';
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'home_screen.dart';
 
 class SignUpScreen extends StatelessWidget {
@@ -20,7 +19,7 @@ class SignUpScreen extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        backgroundColor: Colors.pink,
+        backgroundColor: Colors.blue,
         toolbarHeight: 85,
       ),
       body: SingleChildScrollView(
@@ -77,18 +76,42 @@ class _SignUpFormState extends State<SignUpForm> {
   TextEditingController confirm = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
-  bool obscurePassword = true;
+
   final db = DatabaseHelper.instance;
+
+  String? gender;
+
+  void updateGender(String? value) {
+    setState(() {
+      gender = value;
+    });
+  }
+
+  bool showPasswordIcon = false;
+  bool showConfirmPasswordIcon = false;
+
+  void showPassword() {
+    setState(() {
+      showPasswordIcon = true;
+    });
+  }
+
+  void showConfirmPassword() {
+    setState(() {
+      showConfirmPasswordIcon = true;
+    });
+  }
 
   signup() async {
     var res = await db.createUser(User(
       userName: name.text,
       userEmail: email.text,
       password: password.text,
-      phoneNumber: phoneNumber.text,
+      phoneNumber: phoneNumber.text
+
     ));
     if (res > 0) {
-      final userId = res; // Assuming res contains the user ID
+      final userId = res;
       await Provider.of<StoreProvider>(context, listen: false)
           .fetchFavoriteStores(userId);
 
@@ -159,9 +182,27 @@ class _SignUpFormState extends State<SignUpForm> {
             },
           ),
           const SizedBox(height: 16.0),
+          Row(
+            children: [
+              const Text('Gender: '),
+              Radio<String>(
+                value: 'Male',
+                groupValue: gender,
+                onChanged: updateGender,
+              ),
+              const Text('Male'),
+              Radio<String>(
+                value: 'Female',
+                groupValue: gender,
+                onChanged: updateGender,
+              ),
+              const Text('Female'),
+            ],
+          ),
+          const SizedBox(height: 16.0),
           TextFormField(
             controller: password,
-            obscureText: obscurePassword,
+            obscureText: !showPasswordIcon,
             decoration: InputDecoration(
               labelText: 'Password',
               labelStyle: TextStyle(
@@ -170,11 +211,11 @@ class _SignUpFormState extends State<SignUpForm> {
               suffixIcon: GestureDetector(
                 onTap: () {
                   setState(() {
-                    obscurePassword = !obscurePassword;
+                    showPasswordIcon = !showPasswordIcon;
                   });
                 },
                 child: Icon(
-                  obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  showPasswordIcon ? Icons.visibility : Icons.visibility_off,
                   color: Colors.grey,
                 ),
               ),
@@ -191,7 +232,7 @@ class _SignUpFormState extends State<SignUpForm> {
           const SizedBox(height: 16.0),
           TextFormField(
             controller: confirm,
-            obscureText: obscurePassword,
+            obscureText: !showConfirmPasswordIcon,
             decoration: InputDecoration(
               labelText: 'Confirm Password',
               labelStyle: TextStyle(
@@ -200,11 +241,11 @@ class _SignUpFormState extends State<SignUpForm> {
               suffixIcon: GestureDetector(
                 onTap: () {
                   setState(() {
-                    obscurePassword = !obscurePassword;
+                    showConfirmPasswordIcon = !showConfirmPasswordIcon;
                   });
                 },
                 child: Icon(
-                  obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  showConfirmPasswordIcon ? Icons.visibility : Icons.visibility_off,
                   color: Colors.grey,
                 ),
               ),
@@ -228,7 +269,7 @@ class _SignUpFormState extends State<SignUpForm> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.pink,
+              backgroundColor: Colors.blue,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20.0),
               ),
@@ -267,6 +308,23 @@ class _SignUpFormState extends State<SignUpForm> {
           ],
         );
       },
+    );
+  }
+}
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: SignUpScreen(),
     );
   }
 }

@@ -1,17 +1,16 @@
 import 'package:assignment2/SignUpScreen.dart';
+import 'package:assignment2/provider/LocationService.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:assignment2/SQLite/database_helper.dart';
 import 'package:assignment2/provider/store_provider.dart';
+import 'package:assignment2/WelcomePage.dart';
+
+import 'SQLite/database_helper.dart';
 
 void main() async {
-  // Ensure that the Flutter binding is initialized before initializing the database
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize the database helper
   final dbHelper = DatabaseHelper.instance;
-  await dbHelper.getDatabase(); // Ensure that the database is initialized
-
+  await dbHelper.getDatabase();
   runApp(
     ChangeNotifierProvider<StoreProvider>(
       create: (_) => StoreProvider(),
@@ -31,7 +30,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.indigo,
       ),
-      home: SignUpScreen(), // Set the sign-up screen as the initial screen
+      home: WelcomePage(), // Set the WelcomePage as the initial screen
     );
   }
 }

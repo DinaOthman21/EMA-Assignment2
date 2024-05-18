@@ -17,8 +17,9 @@ class LoginScreen extends StatelessWidget {
           style: TextStyle(
             color: Colors.white,
           ),
+
         ),
-        backgroundColor: Colors.pink,
+        backgroundColor: Colors.blue, // Changed app bar background color to white
         toolbarHeight: 85,
       ),
       body: SingleChildScrollView(
@@ -46,7 +47,7 @@ class LoginScreen extends StatelessWidget {
                     child: const Text(
                       'Sign Up',
                       style: TextStyle(
-                        color: Colors.blue,
+                        color: Colors.blue, // Changed text color to blue
                         decoration: TextDecoration.underline,
                       ),
                     ),
@@ -74,6 +75,9 @@ class _SignInFormState extends State<SignInForm> {
   final _formKey = GlobalKey<FormState>();
   final db = DatabaseHelper.instance;
   SharedPreferences? prefs;
+
+  // Local state to control password visibility
+  bool _isPasswordVisible = false;
 
   @override
   void initState() {
@@ -133,6 +137,13 @@ class _SignInFormState extends State<SignInForm> {
     );
   }
 
+  // Function to toggle password visibility
+  void _togglePasswordVisibility() {
+    setState(() {
+      _isPasswordVisible = !_isPasswordVisible;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -158,13 +169,22 @@ class _SignInFormState extends State<SignInForm> {
             },
           ),
           const SizedBox(height: 16.0),
+          // Toggle password visibility based on _isPasswordVisible
           TextFormField(
             controller: passwordController,
-            obscureText: true,
-            decoration: const InputDecoration(
+            obscureText: !_isPasswordVisible,
+            decoration: InputDecoration(
               labelText: 'Password',
               labelStyle: TextStyle(
                 color: Colors.black87,
+              ),
+              // Add a button to toggle password visibility
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.grey,
+                ),
+                onPressed: _togglePasswordVisibility,
               ),
             ),
             validator: (value) {
@@ -180,7 +200,7 @@ class _SignInFormState extends State<SignInForm> {
               signIn();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.pink,
+              backgroundColor: Colors.blue, // Changed button color to blue
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20.0),
               ),

@@ -1,7 +1,7 @@
-import 'package:assignment2/JSON/user.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models/store.dart';
+import '../JSON/user.dart';
 
 class DatabaseHelper {
   static Database? _database;
@@ -17,7 +17,19 @@ class DatabaseHelper {
     _database = await initDatabase();
     return _database!;
   }
-
+  Future<List<Store>> getStores() async {
+    final db = await getDatabase();
+    final List<Map<String, dynamic>> maps = await db.query('stores');
+    return List.generate(maps.length, (i) {
+      return Store(
+        id: maps[i]['id'],
+        name: maps[i]['name'],
+        longitude: maps[i]['longitude'],
+        latitude: maps[i]['latitude'],
+        distance: maps[i]['distance'],
+      );
+    });
+  }
   Future<Database> initDatabase() async {
     final path = await getDatabasesPath();
     final databasePath = join(path, dbName);
@@ -33,6 +45,7 @@ class DatabaseHelper {
             userEmail TEXT UNIQUE,
             password TEXT,
             phoneNumber TEXT
+          
           )
         ''');
 
@@ -71,9 +84,9 @@ class DatabaseHelper {
   Future<int> insertStore(Store store) async {
     final db = await getDatabase();
     return await db.insert(
-      'stores', 
+      'stores',
       store.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
@@ -156,7 +169,7 @@ class DatabaseHelper {
       // Insert new favorite stores for the user
       for (var store in favoriteStores) {
         await db.insert(
-          'favorite_stores', 
+          'favorite_stores',
           {
             'user_id': userId,
             'store_id': store.id,

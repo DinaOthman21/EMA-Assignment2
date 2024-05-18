@@ -3,6 +3,7 @@ import 'package:assignment2/provider/store_provider.dart';
 import 'package:assignment2/signin.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -14,14 +15,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   SharedPreferences? prefs;
+  Position? _currentPosition;
 
   @override
   void initState() {
     super.initState();
     _initializeSharedPreferences();
-    // Fetch initial data and ensure the user is authenticated
     _ensureAuthenticated();
     Provider.of<StoreProvider>(context, listen: false).fetchInitialData();
+    _getCurrentLocation();
   }
 
   Future<void> _initializeSharedPreferences() async {
@@ -30,7 +32,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _ensureAuthenticated() async {
     if (prefs != null && !(prefs!.getBool('isAuthenticated') ?? false)) {
-      // Navigate to the sign-in page if the user is not authenticated
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -38,9 +39,39 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+        'Location permissions are permanently denied, we cannot request permissions.',
+      );
+    }
+
+    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    setState(() {
+      _currentPosition = position;
+    });
+
+    Provider.of<StoreProvider>(context, listen: false).setUserPosition(position);
+  }
+
   Future<void> _signOut() async {
     if (prefs != null) {
-      // Clear Shared Preferences and navigate to the sign-in screen
       await prefs!.clear();
       Navigator.pushReplacement(
         context,
@@ -62,11 +93,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-        backgroundColor: Colors.pink,
+        backgroundColor: Colors.blue,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: _signOut, // Sign-out function
+            onPressed: _signOut,
           ),
         ],
       ),
@@ -74,12 +105,22 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context, storeProvider, _) {
           final stores = storeProvider.stores;
           final favoriteStores = storeProvider.favoriteStores;
+          final userPosition = _currentPosition;
 
           return ListView.builder(
             itemCount: stores.length,
             itemBuilder: (context, index) {
               final store = stores[index];
               final isFavorite = favoriteStores.contains(store);
+
+              final double distance = userPosition != null
+                  ? Geolocator.distanceBetween(
+                userPosition.latitude,
+                userPosition.longitude,
+                store.latitude ?? 0,
+                store.longitude ?? 0,
+              ) / 1000
+                  : 0.0;
 
               return Card(
                 elevation: 4,
@@ -98,13 +139,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       //Text('Longitude: ${store.longitude}'),
                       //Text('Latitude: ${store.latitude}'),
-                      //Text('Distance: ${store.distance} km'),
+                      //Text('Distance: ${distance.toStringAsFixed(2)} km'),
                     ],
                   ),
                   trailing: IconButton(
                     icon: Icon(
                       isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: isFavorite ? Colors.pink : Colors.black26,
+                      color: isFavorite ? Colors.blue : Colors.black26,
                     ),
                     onPressed: () {
                       if (isFavorite) {
@@ -136,9 +177,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         icon: const Icon(Icons.favorite),
-        backgroundColor: Colors.pink,
+        backgroundColor: Colors.blue,
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
